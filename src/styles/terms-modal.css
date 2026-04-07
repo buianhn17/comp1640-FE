@@ -1,0 +1,324 @@
+/* ============================================================
+   terms-modal.css
+   Styles cho TermsGateModal (popup) và TermsAccept (page)
+   ============================================================ */
+
+/* ── Backdrop ────────────────────────────────────────────── */
+.tg-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: tg-fade 0.2s ease forwards;
+}
+
+@keyframes tg-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal box ───────────────────────────────────────────── */
+.tg-box {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.16),
+    0 8px 20px rgba(0,0,0,0.08);
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 38px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: tg-up 0.28s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+@keyframes tg-up {
+  from { transform: translateY(24px) scale(0.97); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+
+/* Icon */
+.tg-icon-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  margin-bottom: 18px;
+}
+
+.tg-icon-wrap svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Title */
+.tg-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 10px;
+  letter-spacing: -0.2px;
+}
+
+/* Description */
+.tg-desc {
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.65;
+  margin: 0 0 26px;
+}
+
+/* OK button */
+.tg-btn-ok {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Cabin', system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.12s;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.tg-btn-ok:hover {
+  background: #1d4ed8;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+  transform: translateY(-1px);
+}
+
+.tg-btn-ok:active { transform: scale(0.99); }
+
+/* ── TermsAccept page ────────────────────────────────────── */
+.ta-page {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: tg-fade 0.25s ease forwards;
+}
+
+.ta-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ta-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.ta-header-icon svg { width: 22px; height: 22px; }
+
+.ta-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 3px;
+  letter-spacing: -0.3px;
+}
+
+.ta-sub {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ── Content card ────────────────────────────────────────── */
+.ta-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 2px 12px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.ta-card-head {
+  padding: 14px 22px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafbfc;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ta-card-body {
+  padding: 20px 24px;
+}
+
+/* Intro text */
+.ta-intro {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.65;
+  margin: 0 0 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Rules list */
+.ta-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ta-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ta-rule:hover {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.ta-rule-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ta-rule-text {
+  font-size: 13.5px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+/* Checkbox agree row */
+.ta-agree-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 10px;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ta-agree-row:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.ta-agree-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #059669;
+  cursor: pointer;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ta-agree-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #065f46;
+  cursor: pointer;
+}
+
+/* Actions */
+.ta-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.ta-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border-radius: 9px;
+  border: 1.5px solid #e2e8f0;
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Cabin', system-ui, sans-serif;
+}
+
+.ta-btn-cancel:hover { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
+
+.ta-btn-accept {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 22px;
+  border-radius: 9px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.12s, opacity 0.15s;
+  font-family: 'Cabin', system-ui, sans-serif;
+  box-shadow: 0 3px 12px rgba(37,99,235,0.25);
+}
+
+.ta-btn-accept:hover:not(:disabled) {
+  background: #1d4ed8;
+  box-shadow: 0 5px 16px rgba(37,99,235,0.35);
+  transform: translateY(-1px);
+}
+
+.ta-btn-accept:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}

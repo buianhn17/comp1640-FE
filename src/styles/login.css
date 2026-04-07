@@ -1,0 +1,380 @@
+/* Login Page Styles */
+
+.login-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  font-family: 'Cabin', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+
+/* Left Section - Form */
+.login-form-section {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 5rem 0 5rem;
+}
+
+.login-form-wrapper {
+  width: 100%;
+  max-width: 486px;
+}
+
+.login-logo {
+  width: 180px;
+  height: auto;
+  margin-bottom: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.login-logo:hover {
+  transform: scale(1.02);
+}
+
+.login-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 3rem;
+  line-height: 1.3;
+  letter-spacing: -0.3px;
+}
+
+.login-form {
+  width: 100%;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  height: 60px;
+  border: 1.5px solid #DEDDE4;
+  border-radius: 8px;
+  padding: 0 1rem;
+  font-size: 15px;
+  color: #1a1a1a;
+  background: #ffffff;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: #9CA3AF;
+}
+
+.form-input:focus {
+  border-color: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.form-input:hover:not(:focus) {
+  border-color: #c5c4cc;
+}
+
+/* Password Input */
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input {
+  padding-right: 3rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  font-size: 18px;
+  transition: color 0.2s ease;
+  padding: 0.5rem;
+}
+
+.password-toggle:hover {
+  color: #374151;
+}
+
+/* Login Button */
+.login-button {
+  width: 100%;
+  height: 60px;
+  background: #DC2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 0.5rem;
+}
+
+.login-button:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  background: #9CA3AF;
+  cursor: not-allowed;
+}
+
+/* Links */
+.forgot-password-link {
+  text-align: center;
+  margin-top: 1.25rem;
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 0.75rem;
+  font-size: 14px;
+  color: #5D5A6F;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.link-button.secondary {
+  color: #5D5A6F;
+}
+
+.link-button.secondary:hover {
+  color: #1a1a1a;
+  text-decoration: underline;
+}
+
+.link-button.primary {
+  color: #DC2626;
+  font-weight: 600;
+}
+
+.link-button.primary:hover {
+  text-decoration: underline;
+}
+
+/* Vertical Separator */
+.vertical-separator {
+  height: 70%;
+  width: 1.5px;
+  margin: 0 2.5rem;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 3, 60, 0) 0%,
+    #0A033C 51.56%,
+    rgba(10, 3, 60, 0) 100%
+  );
+}
+
+/* Right Section - Illustration */
+.login-illustration-section {
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.illustration-image {
+  width: 70%;
+  max-width: 600px;
+  height: auto;
+  object-fit: contain;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .login-form-section {
+    padding: 0 3rem;
+  }
+
+  .vertical-separator {
+    margin: 0 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-form-section {
+    width: 100%;
+    padding: 2rem;
+  }
+
+  .login-title {
+    font-size: 24px;
+    margin-bottom: 2rem;
+  }
+
+  .vertical-separator,
+  .login-illustration-section {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-form-section {
+    padding: 1.5rem;
+  }
+
+  .login-logo {
+    width: 140px;
+    margin-bottom: 1.5rem;
+  }
+
+  .login-title {
+    font-size: 20px;
+  }
+
+  .form-input,
+  .login-button {
+    height: 52px;
+  }
+}
+
+/* ============================================================
+   login.mock-credentials.css
+   Append these rules into your existing styles/login.css
+   (or @import this file at the bottom of login.css)
+   ============================================================ */
+
+/* Mock credentials panel */
+.mock-credentials {
+  background: #f8faff;
+  border: 1px solid #e0e7ff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+
+.mock-credentials-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #6366f1;
+  letter-spacing: 0.3px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.mock-credentials-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+/* Each mock chip */
+.mock-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+  background: #fff;
+}
+
+.mock-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.mock-chip-role {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.3;
+}
+
+.mock-chip-email {
+  font-size: 10.5px;
+  opacity: 0.72;
+  margin-top: 1px;
+  word-break: break-all;
+}
+
+/* Role colour variants */
+.mock-chip--admin {
+  border-color: #c7d2fe;
+  color: #4338ca;
+}
+.mock-chip--admin:hover {
+  border-color: #6366f1;
+  background: #eef2ff;
+}
+
+.mock-chip--qa-manager {
+  border-color: #fde68a;
+  color: #92400e;
+}
+.mock-chip--qa-manager:hover {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.mock-chip--qa-coordinator {
+  border-color: #d8b4fe;
+  color: #6d28d9;
+}
+.mock-chip--qa-coordinator:hover {
+  border-color: #8b5cf6;
+  background: #f5f3ff;
+}
+
+.mock-chip--staff {
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+.mock-chip--staff:hover {
+  border-color: #10b981;
+  background: #f0fdf4;
+}

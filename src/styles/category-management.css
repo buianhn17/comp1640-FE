@@ -1,0 +1,188 @@
+/* ============================================================
+   category-management.css  —  QA Manager Category Management
+   ============================================================ */
+
+.cat-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Page header ── */
+.cat-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cat-page-title-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cat-page-icon {
+  font-size: 28px;
+  color: #7c3aed;
+  background: #f5f3ff;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.cat-page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cat-page-sub {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+  margin-top: 2px;
+}
+
+.cat-add-btn {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  font-weight: 600;
+  border-radius: 8px !important;
+  height: 38px !important;
+  padding: 0 18px !important;
+}
+.cat-add-btn:hover {
+  background: #6d28d9 !important;
+  border-color: #6d28d9 !important;
+}
+
+/* ── Summary pills ── */
+.cat-summary-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cat-pill-blue {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.cat-pill-gray {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* ── Table card ── */
+.cat-table-card {
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+}
+
+.cat-search-row {
+  margin-bottom: 16px;
+}
+
+.cat-search-input {
+  max-width: 320px;
+  border-radius: 8px !important;
+}
+
+/* ── Table cells ── */
+.cat-row-num {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.cat-name {
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cat-name-icon {
+  color: #7c3aed;
+  font-size: 14px;
+}
+
+.cat-badge-used {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1d4ed8;
+}
+
+.cat-badge-free {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.cat-idea-tag {
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.cat-date {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* ── Action buttons ── */
+.cat-action-btn {
+  border-radius: 6px !important;
+  width: 30px !important;
+  height: 30px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.cat-action-edit:hover {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+}
+
+/* ── Modal ── */
+.cat-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cat-form .ant-form-item-label label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.cat-modal-hint {
+  font-size: 13px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0;
+  line-height: 1.5;
+}

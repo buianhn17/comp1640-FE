@@ -173,7 +173,10 @@ const MainLayout = () => {
   const displayRole    = user?.role        || user?.role_name    || "";
   const displayInitial = displayName[0]?.toUpperCase()          || "U";
 
-  const navItems = getNavItems(displayRole);
+  const rawNavItems = getNavItems(displayRole);
+  const navItems = isAuthenticated
+    ? rawNavItems
+    : rawNavItems.filter((item) => !["submit-idea", "terms"].includes(item.key));
   const location = useLocation();
 
   const openAuthModal = (path) => {
@@ -235,18 +238,20 @@ const MainLayout = () => {
           ))}
         </nav>
 
-        {/* Sidebar footer — user chip */}
-        <div className="main-sidebar-footer">
-          <div className="main-user-chip">
-            <div className="main-user-avatar">{displayInitial}</div>
-            {!collapsed && (
-              <div className="main-user-info">
-                <span className="main-user-name">{displayName}</span>
-                <span className="main-user-role">{displayEmail || displayRole}</span>
-              </div>
-            )}
+        {/* Sidebar footer — user chip (ẩn khi chưa đăng nhập) */}
+        {isAuthenticated && (
+          <div className="main-sidebar-footer">
+            <div className="main-user-chip">
+              <div className="main-user-avatar">{displayInitial}</div>
+              {!collapsed && (
+                <div className="main-user-info">
+                  <span className="main-user-name">{displayName}</span>
+                  <span className="main-user-role">{displayEmail || displayRole}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
       </aside>
 

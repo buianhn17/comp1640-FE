@@ -6,11 +6,8 @@ const AuthModal = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const background = location.state?.background;
-  const fallbackPath = background?.pathname || "/";
-
   const handleClose = () => {
-    navigate(fallbackPath, { replace: true });
+    navigate("/", { replace: true });
   };
 
   useEffect(() => {

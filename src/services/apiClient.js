@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://api.antitt.io.vn";
 
 // Helper: chuyển camelCase object → snake_case object (1 level deep đủ dùng)
 const toSnakeCase = (str) =>

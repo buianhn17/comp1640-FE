@@ -1,258 +1,168 @@
-import { useEffect, useState } from "react";
-import { Spin, Table, Card, Statistic, Row, Col, Select, Button, message, Space } from "antd";
-import { BarChartOutlined, FileExcelOutlined } from "@ant-design/icons";
+import { useEffect, useState, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { Spin, Table, Card, Statistic, Row, Col, Select, Button, message, Space, Alert } from "antd";
+import { BarChartOutlined, FileExcelOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { ROLES } from "../../constants/roles";
 import { getAcademicYears } from "../../services/academicYearService";
 import { getStatisticsReport, exportToCSV, exportAttachmentsAsZip } from "../../services/reportService";
 
 const { Option } = Select;
-
-// ─────────────────────────────────────────────────────────────
-// 🔧 Toggle this to switch between mock data and real API
-const USE_MOCK = false;
-// ─────────────────────────────────────────────────────────────
-
-/* ── Mock data ─────────────────────────────────────────────── */
-const MOCK_ACADEMIC_YEARS = [
-  { yearId: 1, yearLabel: "2024 – 2025", ideaClosureDate: "2025-03-31", finalClosureDate: "2025-04-30", commentOpen: false },
-  { yearId: 2, yearLabel: "2023 – 2024", ideaClosureDate: "2024-03-31", finalClosureDate: "2024-04-30", commentOpen: false },
-  { yearId: 3, yearLabel: "2022 – 2023", ideaClosureDate: "2023-03-31", finalClosureDate: "2023-04-30", commentOpen: false },
-];
-
-const MOCK_STATISTICS = [
-  { deptId: 1, deptName: "Engineering",       ideaCount: 42, percentageOfTotal: 32, contributorCount: 18 },
-  { deptId: 2, deptName: "Marketing",         ideaCount: 28, percentageOfTotal: 21, contributorCount: 11 },
-  { deptId: 3, deptName: "Human Resources",   ideaCount: 19, percentageOfTotal: 14, contributorCount:  9 },
-  { deptId: 4, deptName: "Finance",           ideaCount: 16, percentageOfTotal: 12, contributorCount:  7 },
-  { deptId: 5, deptName: "Product",           ideaCount: 14, percentageOfTotal: 11, contributorCount:  6 },
-  { deptId: 6, deptName: "Customer Support",  ideaCount: 12, percentageOfTotal: 10, contributorCount:  5 },
-];
-
-/* ── Mock service wrappers ─────────────────────────────────── */
-const mockGetAcademicYears = async () => {
-  await new Promise((r) => setTimeout(r, 400));
-  return MOCK_ACADEMIC_YEARS;
-};
-
-const mockGetStatisticsReport = async (yearId, deptId) => {
-  await new Promise((r) => setTimeout(r, 500));
-  if (deptId) return MOCK_STATISTICS.filter((s) => s.deptId === deptId);
-  return MOCK_STATISTICS;
-};
-
-const mockExportToCSV = async () => {
-  await new Promise((r) => setTimeout(r, 800));
-  // Simulate file download with a Blob
-  const csv = ["Department,Ideas,% of Total,Contributors",
-    ...MOCK_STATISTICS.map((s) =>
-      `${s.deptName},${s.ideaCount},${s.percentageOfTotal}%,${s.contributorCount}`),
-  ].join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href = url; a.download = "statistics_mock.csv"; a.click();
-  URL.revokeObjectURL(url);
-};
-
-const mockExportAttachmentsAsZip = async () => {
-  await new Promise((r) => setTimeout(r, 800));
-  // No-op in mock — just simulates the delay
-};
-
-/* ── Resolved service calls ────────────────────────────────── */
-const svcGetAcademicYears     = USE_MOCK ? mockGetAcademicYears     : getAcademicYears;
-const svcGetStatisticsReport  = USE_MOCK ? mockGetStatisticsReport  : getStatisticsReport;
-const svcExportToCSV          = USE_MOCK ? mockExportToCSV          : exportToCSV;
-const svcExportAttachmentsAsZip = USE_MOCK ? mockExportAttachmentsAsZip : exportAttachmentsAsZip;
-
-/* ═══════════════════════════════════════════════════════════ */
+const FULL_ACCESS_ROLES = [ROLES.ADMIN, ROLES.QA_MANAGER];
 
 const Statistics = () => {
-  const [academicYears,  setAcademicYears]  = useState([]);
-  const [selectedYearId, setSelectedYearId] = useState(null);
-  const [selectedDeptId, setSelectedDeptId] = useState(null);
-  const [statistics,     setStatistics]     = useState([]);
-  const [loading,        setLoading]        = useState(false);
-  const [fetchingYears,  setFetchingYears]  = useState(true);
+  const user = useSelector((state) => state.auth.user);
+  const hasFullAccess = FULL_ACCESS_ROLES.includes(user?.role);
 
-  /* ── Load academic years ─────────────────────────────────── */
+  // 1. 🔥 FIX: Khớp chính xác với trường 'departmentId' trong Console của bạn
+  const userDeptId = user?.departmentId || user?.deptId || user?.department_id || null;
+  const userDeptName = user?.deptName || user?.role || "Department";
+
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYearId, setSelectedYearId] = useState(null);
+  const [statistics, setStatistics] = useState([]); 
+  const [loading, setLoading] = useState(false);
+  const [fetchingYears, setFetchingYears] = useState(true);
+
+  // selectedDeptId: Mặc định lấy userDeptId nếu không phải Admin
+  const [selectedDeptId, setSelectedDeptId] = useState(hasFullAccess ? null : userDeptId);
+
+  // Cập nhật lại selectedDeptId nếu ban đầu userDeptId bị null do load chậm
   useEffect(() => {
-    const fetch = async () => {
+    if (!hasFullAccess && userDeptId && !selectedDeptId) {
+      setSelectedDeptId(userDeptId);
+    }
+  }, [userDeptId, hasFullAccess, selectedDeptId]);
+
+  // Load Years
+  useEffect(() => {
+    const fetchYears = async () => {
       setFetchingYears(true);
       try {
-        const data = await svcGetAcademicYears();
+        const data = await getAcademicYears();
         setAcademicYears(data ?? []);
         if (data?.length > 0) setSelectedYearId(data[0].yearId);
-      } catch {
-        message.error("Failed to load academic years");
-      } finally {
-        setFetchingYears(false);
-      }
+      } catch { message.error("Failed to load years"); }
+      finally { setFetchingYears(false); }
     };
-    fetch();
+    fetchYears();
   }, []);
 
-  /* ── Load statistics khi đổi year/dept ──────────────────── */
+  // Load Data Report
   useEffect(() => {
     if (!selectedYearId) return;
-    const fetch = async () => {
+    
+    // Nếu là Manager mà vẫn chưa lấy được ID thì không gọi API
+    if (!hasFullAccess && !userDeptId) return;
+
+    const fetchReport = async () => {
       setLoading(true);
       try {
-        const data = await svcGetStatisticsReport(selectedYearId, selectedDeptId);
+        const deptIdToFetch = hasFullAccess ? selectedDeptId : userDeptId;
+        const data = await getStatisticsReport(selectedYearId, deptIdToFetch);
         setStatistics(data ?? []);
-      } catch {
-        message.error("Failed to load statistics");
-      } finally {
-        setLoading(false);
-      }
+      } catch { message.error("Failed to load statistics"); }
+      finally { setLoading(false); }
     };
-    fetch();
-  }, [selectedYearId, selectedDeptId]);
+    fetchReport();
+  }, [selectedYearId, selectedDeptId, hasFullAccess, userDeptId]);
 
-  const totalIdeas        = statistics.reduce((s, d) => s + d.ideaCount, 0);
-  const totalContributors = statistics.reduce((s, d) => s + d.contributorCount, 0);
+  /* ─── LOGIC LỌC DỮ LIỆU (Chỉ hiện 1 dòng cho Manager) ─── */
+  const filteredData = useMemo(() => {
+    if (!statistics || statistics.length === 0) return [];
+
+    if (hasFullAccess) {
+      if (!selectedDeptId) return statistics; 
+      // So sánh linh hoạt các tên trường ID trong mảng trả về
+      return statistics.filter(s => String(s.deptId || s.dept_id || s.departmentId) === String(selectedDeptId));
+    }
+
+    // Đối với Manager: Chỉ hiện duy nhất dòng phòng ban của mình
+    // String() để tránh lỗi so sánh 1 (number) với "1" (string)
+    return statistics.filter(s => String(s.deptId || s.dept_id || s.departmentId) === String(userDeptId));
+  }, [statistics, hasFullAccess, selectedDeptId, userDeptId]);
+
+  const totalIdeas = filteredData.reduce((s, d) => s + (d.ideaCount || d.idea_count || 0), 0);
+  const totalContributors = filteredData.reduce((s, d) => s + (d.contributorCount || d.contributor_count || 0), 0);
 
   const columns = [
-    {
-      title: "Department",
-      dataIndex: "deptName",
+    { 
+      title: "Department", 
+      dataIndex: "deptName", 
       key: "deptName",
-      sorter: (a, b) => a.deptName.localeCompare(b.deptName),
+      render: (text, record) => text || record.dept_name 
     },
-    {
-      title: "Ideas",
-      dataIndex: "ideaCount",
-      key: "ideaCount",
-      sorter: (a, b) => a.ideaCount - b.ideaCount,
-      align: "center",
-      render: (v) => <strong>{v}</strong>,
-    },
-    {
-      title: "% of Total",
-      dataIndex: "percentageOfTotal",
-      key: "percentageOfTotal",
-      sorter: (a, b) => a.percentageOfTotal - b.percentageOfTotal,
-      align: "center",
-      render: (v) => `${v}%`,
-    },
-    {
-      title: "Contributors",
-      dataIndex: "contributorCount",
-      key: "contributorCount",
-      sorter: (a, b) => a.contributorCount - b.contributorCount,
-      align: "center",
-      render: (v) => <strong>{v}</strong>,
-    },
+    { title: "Ideas", dataIndex: "ideaCount", key: "ideaCount", align: "center", render: (v, record) => <strong>{v ?? record.idea_count}</strong> },
+    { title: "Contributors", dataIndex: "contributorCount", key: "contributorCount", align: "center", render: (v, record) => v ?? record.contributor_count },
+    { title: "% of Total", dataIndex: "percentageOfTotal", key: "percentageOfTotal", align: "center", render: (v, record) => `${v ?? record.percentage_of_total}%` },
   ];
-
-  const handleExportCSV = async () => {
-    try {
-      await svcExportToCSV(selectedYearId);
-      message.success("CSV exported successfully");
-    } catch {
-      message.error("Failed to export CSV");
-    }
-  };
-
-  const handleExportZip = async () => {
-    try {
-      await svcExportAttachmentsAsZip(selectedYearId);
-      message.success("ZIP exported successfully");
-    } catch {
-      message.error("Failed to export ZIP");
-    }
-  };
 
   return (
     <Spin spinning={fetchingYears}>
       <div style={{ padding: "24px" }}>
-        <h1 style={{ fontSize: 28, fontWeight: 600, marginBottom: 8 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 8 }}>
           <BarChartOutlined style={{ marginRight: 8 }} />
           System Statistics
         </h1>
-        <p style={{ color: "#64748b", marginBottom: 24 }}>
-          Overview of idea contributions by department
+        <p style={{ color: "#64748b", marginBottom: 16 }}>
+          {hasFullAccess ? "University-wide Dashboard" : `Department Dashboard: ${userDeptName}`}
         </p>
 
-        <Card style={{ marginBottom: 24 }}>
+        {/* 2. 🔥 CẢNH BÁO LỖI: Chỉ hiện khi thực sự không tìm thấy ID sau khi đã load xong */}
+        {!hasFullAccess && !userDeptId && !fetchingYears && (
+          <Alert
+            message="Error: Department ID not found"
+            description="Your account is not linked to any department. Please contact Admin."
+            type="error"
+            showIcon
+            style={{ marginBottom: 20 }}
+          />
+        )}
+
+        <Card style={{ marginBottom: 24, borderRadius: 8 }}>
           <Space size="large" wrap>
             <div>
-              <label style={{ display: "block", marginBottom: 8, fontSize: 14 }}>Academic Year</label>
-              <Select
-                value={selectedYearId}
-                onChange={setSelectedYearId}
-                style={{ width: 220 }}
-                placeholder="Select Year"
-              >
-                {academicYears.map((y) => (
-                  <Option key={y.yearId} value={y.yearId}>{y.yearLabel}</Option>
-                ))}
+              <span style={{ marginRight: 8 }}>Academic Year:</span>
+              <Select value={selectedYearId} onChange={setSelectedYearId} style={{ width: 150 }}>
+                {academicYears.map(y => <Option key={y.yearId} value={y.yearId}>{y.yearLabel}</Option>)}
               </Select>
             </div>
-            <div>
-              <label style={{ display: "block", marginBottom: 8, fontSize: 14 }}>
-                Department Filter (Optional)
-              </label>
-              <Select
-                value={selectedDeptId}
-                onChange={setSelectedDeptId}
-                style={{ width: 200 }}
-                placeholder="All Departments"
-                allowClear
-              >
-                {statistics.map((s) => (
-                  <Option key={s.deptId} value={s.deptId}>{s.deptName}</Option>
-                ))}
-              </Select>
-            </div>
+
+            {hasFullAccess && (
+              <div>
+                <span style={{ marginRight: 8 }}>Filter Department:</span>
+                <Select
+                  value={selectedDeptId}
+                  onChange={setSelectedDeptId}
+                  style={{ width: 200 }}
+                  placeholder="All Departments"
+                  allowClear
+                >
+                  {statistics.map(s => (
+                    <Option key={s.deptId || s.dept_id} value={s.deptId || s.dept_id}>
+                      {s.deptName || s.dept_name}
+                    </Option>
+                  ))}
+                </Select>
+              </div>
+            )}
           </Space>
         </Card>
 
         <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} md={8}>
-            <Card>
-              <Statistic title="Total Ideas"           value={totalIdeas}        prefix={<BarChartOutlined />} />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Card>
-              <Statistic title="Departments Involved"  value={statistics.length} />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Card>
-              <Statistic title="Total Contributors"    value={totalContributors} />
-            </Card>
-          </Col>
+          <Col span={8}><Card bordered={false}><Statistic title="Ideas" value={totalIdeas} /></Card></Col>
+          <Col span={8}><Card bordered={false}><Statistic title="Contributors" value={totalContributors} /></Card></Col>
+          <Col span={8}><Card bordered={false}><Statistic title="View Scope" value={hasFullAccess ? "Full" : "Local"} /></Card></Col>
         </Row>
 
-        <Card style={{ marginBottom: 24 }}>
-          <h3 style={{ marginBottom: 16, fontSize: 16, fontWeight: 600 }}>
-            Statistics by Department
-          </h3>
+        <Card title="Detailed Data">
           <Table
             columns={columns}
-            dataSource={statistics}
-            rowKey="deptId"
-            pagination={{ pageSize: 10 }}
+            dataSource={filteredData}
+            rowKey={(record) => record.deptId || record.dept_id}
             loading={loading}
+            pagination={hasFullAccess}
           />
         </Card>
-
-        <Space>
-          <Button
-            type="primary" icon={<FileExcelOutlined />}
-            onClick={handleExportCSV}
-            disabled={!selectedYearId || totalIdeas === 0}
-          >
-            Export Ideas &amp; Comments CSV
-          </Button>
-          <Button
-            onClick={handleExportZip}
-            disabled={!selectedYearId || totalIdeas === 0}
-          >
-            Export Attachments ZIP
-          </Button>
-        </Space>
       </div>
     </Spin>
   );

@@ -1,11 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 /* =========================
-   NORMALIZE ROLE (🔥 FIX)
+   NORMALIZE ROLE
 ========================= */
 export const normalizeRole = (role = "") => {
   const r = role.replace("ROLE_", "").toUpperCase();
 
+  if (r.includes("ADMIN")) return "ADMIN";
+  if (r.includes("QA_MANAGER")) return "QA_MANAGER";
+  if (r.includes("QA_COORDINATOR")) return "QA_COORDINATOR";
+  if (r.includes("DEPT_MANAGER")) return "DEPT_MANAGER";
+  if (r.includes("HR")) return "HR_MANAGER";
+  if (r.includes("HEAD")) return "HEAD";
   if (r.includes("ACADEMIC")) return "ACADEMIC";
   if (r.includes("SUPPORT")) return "SUPPORT";
 
@@ -51,11 +57,14 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     loginSuccess: (state, action) => {
-      const { user, token } = action.payload;
+      // Vì Backend trả về phẳng (email, role, department_id nằm ngoài cùng)
+      // ta lấy token riêng, và gom tất cả các trường còn lại vào 'user'
+      const { token, ...userData } = action.payload;
 
       const normalizedUser = {
-        ...user,
-        role: normalizeRole(user.role), // 🔥 FIX
+        ...userData,
+        role: normalizeRole(userData.role),
+        // Đảm bảo department_id được giữ lại trong object user
       };
 
       state.user = normalizedUser;

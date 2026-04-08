@@ -1,20 +1,14 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import illustration from "../../assets/Investment data-rafiki 1.png";
 import logo from "../../assets/Logo.png";
 import { notification } from "antd";
 import "./../../styles/register.css";
-import AuthModal from "../../components/AuthModal";
 import { register as registerApi } from "../../services/authService";
 
-const Register = ({ isModal = false }) => {
+const Register = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const bgState = location.state?.background;
-
-  const goToAuth = (path) =>
-    navigate(path, isModal ? { state: { background: bgState } } : undefined);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -43,38 +37,33 @@ const Register = ({ isModal = false }) => {
   const validate = () => {
     if (!formData.fullName || !formData.email || !formData.password) {
       notification.warning({
-        message: "Thiếu thông tin",
+        title: "Thiếu thông tin",
         description: "Vui lòng điền đầy đủ các trường bắt buộc",
       });
       return false;
     }
 
-    // email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      notification.error({
-        message: "Email không hợp lệ",
-      });
+      notification.error({ title: "Email không hợp lệ" });
       return false;
     }
 
     if (formData.password.length < 6) {
       notification.error({
-        message: "Mật khẩu quá ngắn",
+        title: "Mật khẩu quá ngắn",
         description: "Tối thiểu 6 ký tự",
       });
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      notification.error({ message: "Mật khẩu không khớp" });
+      notification.error({ title: "Mật khẩu không khớp" });
       return false;
     }
 
     if (!formData.agree) {
-      notification.warning({
-        message: "Bạn phải đồng ý với Điều khoản & Điều kiện",
-      });
+      notification.warning({ title: "Bạn phải đồng ý với Điều khoản & Điều kiện" });
       return false;
     }
 
@@ -104,11 +93,10 @@ const Register = ({ isModal = false }) => {
       await registerApi(payload);
 
       notification.success({
-        message: "Đăng ký thành công",
+        title: "Đăng ký thành công",
         description: "Bạn có thể đăng nhập ngay bây giờ",
       });
 
-      // reset form
       setFormData({
         fullName: "",
         email: "",
@@ -118,7 +106,7 @@ const Register = ({ isModal = false }) => {
         agree: false,
       });
 
-      goToAuth("/login");
+      navigate("/login");
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -126,7 +114,7 @@ const Register = ({ isModal = false }) => {
         "Đăng ký thất bại, vui lòng thử lại";
 
       notification.error({
-        message: "Đăng ký thất bại",
+        title: "Đăng ký thất bại",
         description: msg,
       });
     } finally {
@@ -138,129 +126,7 @@ const Register = ({ isModal = false }) => {
      UI GIỮ NGUYÊN 100%
   ========================= */
 
-  if (isModal) {
-    return (
-      <AuthModal>
-        <img src={logo} alt="Logo" className="am-logo" />
-        <h2 className="am-title">Tạo tài khoản</h2>
-
-        <form onSubmit={handleRegister}>
-          <div className="am-group">
-            <label className="am-label">Họ và tên</label>
-            <input
-              type="text"
-              name="fullName"
-              className="am-input"
-              placeholder="Nhập họ và tên"
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="am-group">
-            <label className="am-label">Email</label>
-            <input
-              type="email"
-              name="email"
-              className="am-input"
-              placeholder="abc@university.edu"
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* 🔥 UI giữ nguyên nhưng logic đã fix */}
-          <div className="am-group">
-            <label className="am-label">Loại nhân viên</label>
-            <select
-              name="staffType"
-              className="am-input am-select"
-              onChange={handleChange}
-              defaultValue="ACADEMIC"
-            >
-              <option value="ACADEMIC">Academic</option>
-              <option value="SUPPORT">Support</option>
-              <option value="MANAGEMENT">Management</option>
-              <option value="SYSTEM">System</option>
-            </select>
-          </div>
-
-          <div className="am-group">
-            <label className="am-label">Mật khẩu</label>
-            <div className="am-pw-wrap">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                className="am-input"
-                placeholder="••••••••"
-                onChange={handleChange}
-              />
-              <button
-                type="button"
-                className="am-pw-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="am-group">
-            <label className="am-label">Xác nhận mật khẩu</label>
-            <div className="am-pw-wrap">
-              <input
-                type={showConfirm ? "text" : "password"}
-                name="confirmPassword"
-                className="am-input"
-                placeholder="••••••••"
-                onChange={handleChange}
-              />
-              <button
-                type="button"
-                className="am-pw-toggle"
-                onClick={() => setShowConfirm(!showConfirm)}
-              >
-                {showConfirm ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="am-terms">
-            <input
-              type="checkbox"
-              name="agree"
-              id="am-terms-cb"
-              onChange={handleChange}
-            />
-            <label htmlFor="am-terms-cb">
-              Tôi đồng ý với Điều khoản &amp; Điều kiện
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            className="am-btn-primary"
-            disabled={loading}
-          >
-            {loading ? "Đang đăng ký..." : "Đăng ký"}
-          </button>
-
-          <div className="am-footer">
-            <span className="am-link-row">
-              Đã có tài khoản?{" "}
-              <button
-                type="button"
-                className="am-link am-link-primary"
-                onClick={() => goToAuth("/login")}
-              >
-                Đăng nhập
-              </button>
-            </span>
-          </div>
-        </form>
-      </AuthModal>
-    );
-  }
-
-  /* ===== PAGE VERSION (GIỮ NGUYÊN) ===== */
+  /* ===== PAGE VERSION ===== */
   return (
     <div className="register-container">
       <div className="register-form-section">
@@ -289,20 +155,6 @@ const Register = ({ isModal = false }) => {
                 className="form-input"
                 onChange={handleChange}
               />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Staff Type</label>
-              <select
-                name="staffType"
-                className="form-input form-select"
-                onChange={handleChange}
-              >
-                <option value="ACADEMIC">Academic</option>
-                <option value="SUPPORT">Support</option>
-                <option value="MANAGEMENT">Management</option>
-                <option value="SYSTEM">System</option>
-              </select>
             </div>
 
             <div className="form-group">

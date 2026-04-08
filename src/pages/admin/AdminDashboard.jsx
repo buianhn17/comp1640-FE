@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import "../../styles/admin.shared.css";
 import "../../styles/AdminDashboard.css";
-import { getStatisticsReport } from "../../services/reportService";
+import { getComprehensiveStatistics } from "../../services/reportService";
 import { getAcademicYears } from "../../services/academicYearService";
 import { getDepartments } from "../../services/departmentService";
 
@@ -12,6 +12,37 @@ import { getDepartments } from "../../services/departmentService";
 // Normalize API statistics response (camelCase) → shape used by UI
 function normalizeReport(raw) {
   if (!raw) return null;
+  
+  // Map topContributors
+  var topContributors = (raw.topContributors ?? []).map(function (c) {
+    return {
+      full_name: c.fullName ?? "",
+      dept_name: c.deptName ?? "",
+      idea_count: c.ideaCount ?? 0,
+      initial: (c.fullName ?? "?")[0].toUpperCase(),
+    };
+  });
+
+  // Map byDepartment breakdown
+  var byDepartment = (raw.byDepartment ?? []).map(function (d) {
+    return {
+      dept_id: d.deptId,
+      dept_name: d.deptName ?? "",
+      idea_count: d.ideaCount ?? 0,
+      comment_count: d.commentCount ?? 0,
+      user_count: d.userCount ?? 0,
+      percent: d.percent ?? 0,
+    };
+  });
+
+  // Map monthly trend
+  var monthlyTrend = (raw.monthlyTrend ?? []).map(function (m) {
+    return {
+      month: m.month ?? "",
+      idea_count: m.ideaCount ?? 0,
+    };
+  });
+
   return {
     total_ideas: raw.totalIdeas ?? 0,
     total_comments: raw.totalComments ?? 0,
@@ -21,35 +52,10 @@ function normalizeReport(raw) {
     anonymous_ideas: raw.anonymousIdeas ?? 0,
     ideas_with_comments: raw.ideasWithComments ?? 0,
     ideas_without_comments: raw.ideasWithoutComments ?? 0,
-    dept_name: raw.deptName ?? raw.dept_name ?? "",
-    top_contributors: (raw.topContributors ?? []).map(function (c) {
-      return {
-        full_name: c.fullName ?? c.full_name ?? "",
-        dept_name: c.deptName ?? c.dept_name ?? "",
-        idea_count: c.ideaCount ?? c.idea_count ?? 0,
-        initial: (c.fullName ?? c.full_name ?? "?")[0].toUpperCase(),
-      };
-    }),
-    by_department: (raw.byDepartment ?? raw.departmentBreakdown ?? []).map(
-      function (d) {
-        return {
-          dept_id: d.deptId ?? d.dept_id,
-          dept_name: d.deptName ?? d.dept_name ?? "",
-          idea_count: d.ideaCount ?? d.idea_count ?? 0,
-          comment_count: d.commentCount ?? d.comment_count ?? 0,
-          user_count: d.userCount ?? d.user_count ?? 0,
-          percent: d.percent ?? 0,
-        };
-      }
-    ),
-    monthly_trend: (raw.monthlyTrend ?? raw.trendByMonth ?? []).map(
-      function (m) {
-        return {
-          month: m.month ?? m.monthLabel ?? "",
-          idea_count: m.ideaCount ?? m.idea_count ?? 0,
-        };
-      }
-    ),
+    dept_name: raw.deptName ?? "",
+    top_contributors: topContributors,
+    by_department: byDepartment,
+    monthly_trend: monthlyTrend,
   };
 }
 
@@ -362,7 +368,7 @@ var AdminDashboard = function () {
         setData(raw);
       } else {
         var deptId = deptFilter !== "overall" && deptFilter ? Number(deptFilter) : null;
-        raw = await getStatisticsReport(yearId || undefined, deptId);
+        raw = await getComprehensiveStatistics(yearId || undefined, deptId);
         setData(normalizeReport(raw) || EMPTY_DATA);
       }
     } catch (err) {

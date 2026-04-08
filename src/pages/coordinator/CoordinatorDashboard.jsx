@@ -8,10 +8,7 @@ import { getAllIdeas } from "../../services/ideaService";
 import { getCurrentAcademicYear } from "../../services/academicYearService";
 import "../../styles/coordinator.css";
 
-// ─────────────────────────────────────────────────────────────
-// 🔧 Toggle this to switch between mock data and real API
 const USE_MOCK = false;
-// ─────────────────────────────────────────────────────────────
 
 /* ── Mock data ─────────────────────────────────────────────── */
 const MOCK_CURRENT_YEAR = {
@@ -38,23 +35,13 @@ const MOCK_IDEAS = [
   { ideaId: 12, title: "Flexible remote-work policy update",    authorId: "u1", authorName: "Alice Nguyen",  isAnonymous: false, submittedAt: "2025-03-20T09:45:00Z", upvotes: 20, downvotes: 2 },
 ];
 
-/* ── Mock service wrappers ─────────────────────────────────── */
-const mockGetCurrentAcademicYear = async () => {
-  await new Promise((r) => setTimeout(r, 300));
-  return MOCK_CURRENT_YEAR;
-};
+const mockGetCurrentAcademicYear = async () => { await new Promise((r) => setTimeout(r, 300)); return MOCK_CURRENT_YEAR; };
+const mockGetAllIdeas            = async () => { await new Promise((r) => setTimeout(r, 500)); return { content: MOCK_IDEAS, totalElements: MOCK_IDEAS.length, totalPages: 1 }; };
 
-const mockGetAllIdeas = async () => {
-  await new Promise((r) => setTimeout(r, 500));
-  return { content: MOCK_IDEAS, totalElements: MOCK_IDEAS.length, totalPages: 1 };
-};
-
-/* ── Resolved service calls ────────────────────────────────── */
 const svcGetCurrentAcademicYear = USE_MOCK ? mockGetCurrentAcademicYear : getCurrentAcademicYear;
 const svcGetAllIdeas            = USE_MOCK ? mockGetAllIdeas            : getAllIdeas;
 
-/* ═══════════════════════════════════════════════════════════ */
-
+/* ── Custom Tooltip ── */
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
@@ -69,6 +56,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
+/* ═══════════════════════════════════════════════════════════ */
 const CoordinatorDashboard = () => {
   const user = useSelector((state) => state.auth.user);
 
@@ -82,7 +70,12 @@ const CoordinatorDashboard = () => {
       try {
         const [year, ideasData] = await Promise.all([
           svcGetCurrentAcademicYear(),
-          svcGetAllIdeas({ deptId: user?.deptId, size: 100 }),
+          // QA_COORDINATOR chỉ xem ideas trong dept của mình
+          // Truyền deptId vào params để BE filter
+          svcGetAllIdeas({
+            deptId: user?.deptId,
+            size: 100,
+          }),
         ]);
         setCurrentYear(year);
         setIdeas(ideasData?.content ?? []);
@@ -95,12 +88,12 @@ const CoordinatorDashboard = () => {
     fetchAll();
   }, [user]);
 
-  /* ── Stats ───────────────────────────────────────────────── */
+  /* ── Stats ── */
   const totalIdeas        = ideas.length;
   const totalContributors = new Set(ideas.map((i) => i.authorId).filter(Boolean)).size;
   const anonymousCount    = ideas.filter((i) => i.isAnonymous).length;
 
-  /* ── Monthly trend ───────────────────────────────────────── */
+  /* ── Monthly trend ── */
   const monthlyData = (() => {
     const map = {};
     ideas.forEach((idea) => {
@@ -114,19 +107,18 @@ const CoordinatorDashboard = () => {
       .slice(-6);
   })();
 
-  /* ── Recent 5 ideas ──────────────────────────────────────── */
+  /* ── Recent 5 ideas ── */
   const recentIdeas = [...ideas]
     .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
     .slice(0, 5);
 
   const deptName  = user?.deptName || (USE_MOCK ? "Engineering" : "Department");
   const yearLabel = currentYear?.yearLabel || "N/A";
-
   const formatDate = (d) => d ? new Date(d).toLocaleDateString("vi-VN") : "—";
 
   return (
     <div className="co-page">
-      {/* ── Header ─────────────────────────────────────────── */}
+      {/* ── Header ── */}
       <div className="co-page-header">
         <div>
           <h1 className="co-page-title">
@@ -148,7 +140,7 @@ const CoordinatorDashboard = () => {
         </div>
       ) : (
         <>
-          {/* ── Stat cards ─────────────────────────────────── */}
+          {/* ── Stat cards ── */}
           <div className="co-stats-grid">
             <div className="co-stat-card">
               <div className="co-stat-head">
@@ -214,7 +206,7 @@ const CoordinatorDashboard = () => {
             </div>
           </div>
 
-          {/* ── Chart + top contributors ────────────────────── */}
+          {/* ── Chart + top contributors ── */}
           <div className="co-row">
             <div className="co-card">
               <div className="co-card-head">
@@ -271,7 +263,7 @@ const CoordinatorDashboard = () => {
             </div>
           </div>
 
-          {/* ── Recent ideas table ─────────────────────────── */}
+          {/* ── Recent ideas table ── */}
           <div className="co-card">
             <div className="co-card-head">
               <span className="co-card-title">Ý tưởng gần đây</span>
@@ -303,6 +295,7 @@ const CoordinatorDashboard = () => {
                         }}>
                           {idea.title}
                         </td>
+                        {/* QA_COORDINATOR không được xem danh tính ẩn danh */}
                         <td>{idea.isAnonymous ? "Ẩn danh" : (idea.authorName ?? "—")}</td>
                         <td style={{ whiteSpace: "nowrap" }}>{formatDate(idea.submittedAt)}</td>
                         <td>{idea.upvotes ?? 0}</td>

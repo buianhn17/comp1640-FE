@@ -1,19 +1,12 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { notification } from "antd";
 import illustration from "../../assets/Investment data-rafiki 1.png";
 import logo from "../../assets/Logo.png";
 import "./../../styles/forgot-password.css";
 
-import AuthModal from "../../components/AuthModal"; // ← điều chỉnh path nếu cần
-
-const ForgotPassword = ({ isModal = false }) => {
+const ForgotPassword = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const bgState = location.state?.background;
-  const goToAuth = (path) =>
-    navigate(path, isModal ? { state: { background: bgState } } : undefined);
 
   const [email,   setEmail]   = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,46 +29,12 @@ const ForgotPassword = ({ isModal = false }) => {
         description: "Nếu email tồn tại, link đặt lại mật khẩu đã được gửi.",
       });
       setLoading(false);
-      setTimeout(() => goToAuth("/login"), 1500);
+      setTimeout(() => navigate("/login"), 1500);
     }, 1500);
   };
 
   /* ══════════════════════════════════════════════════════════
-     MODAL VERSION
-  ══════════════════════════════════════════════════════════ */
-  if (isModal) {
-    return (
-      <AuthModal>
-        <img src={logo} alt="Logo" className="am-logo" />
-        <h2 className="am-title">Quên mật khẩu?</h2>
-        <p className="am-desc">
-          Nhập email của bạn và chúng tôi sẽ gửi link đặt lại mật khẩu.
-        </p>
-
-        <form onSubmit={handleSubmit}>
-          <div className="am-group">
-            <label className="am-label">Email</label>
-            <input type="email" className="am-input" placeholder="abc@university.edu"
-              value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-
-          <button type="submit" className="am-btn-primary" disabled={loading}>
-            {loading ? "Đang gửi..." : "Gửi link đặt lại"}
-          </button>
-
-          <div className="am-footer">
-            <button type="button" className="am-link am-link-secondary"
-              onClick={() => goToAuth("/login")}>
-              ← Quay lại đăng nhập
-            </button>
-          </div>
-        </form>
-      </AuthModal>
-    );
-  }
-
-  /* ══════════════════════════════════════════════════════════
-     FULL-PAGE VERSION — giữ nguyên 100% như cũ
+     FULL-PAGE VERSION
   ══════════════════════════════════════════════════════════ */
   return (
     <div className="forgot-password-container">

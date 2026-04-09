@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // ✅ FIX: thêm useEffect
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/slices/authSlice";
 import { ROLES } from "../constants/roles";
 import "../styles/main-layout.css";
-
+import { connectWebSocket, disconnectWebSocket } from "../services/websocketService";
+import { addNotification } from "../redux/slices/notificationSlice";
+import NotificationDropdown from "../components/NotificationDropdown";
 /* ═══════════════════════════════════════════════════════════
    NAV ITEM DEFINITIONS theo từng role
 ═══════════════════════════════════════════════════════════ */
@@ -188,9 +190,30 @@ function getNavItems(role) {
 ═══════════════════════════════════════════════════════════ */
 const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const { user } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // ✅ WebSocket connection khi component mount
+  useEffect(() => {
+    if (user?.userId) {
+      console.log('[MainLayout] Connecting WebSocket for userId:', user.userId);
+      connectWebSocket(
+        user.userId,
+        (notification) => {
+          console.log("📬 Nhận thông báo mới:", notification);
+          dispatch(addNotification(notification));
+        },
+        () => console.log('[MainLayout] WebSocket connected'),
+        (error) => console.error('[MainLayout] WebSocket error:', error)
+      );
+    }
+
+    return () => {
+      console.log('[MainLayout] Disconnecting WebSocket');
+      disconnectWebSocket();
+    };
+  }, [user?.userId, dispatch]); // ← Thêm dispatch vào dependency
 
   const handleLogout = () => {
     dispatch(logout());
@@ -282,14 +305,9 @@ const MainLayout = () => {
               <span className="main-topbar-role-chip">{displayRole}</span>
               <span className="main-topbar-username">{displayName}</span>
             </div>
-            {/* Notification */}
-            <button className="main-topbar-notif" title="Notifications">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="20" height="20">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
-            </button>
-            {/* Sign Out */}
+            {/* ── Notification Bell (thay thế button cũ) ── */}
+            <NotificationDropdown />
+ 
             <button className="main-topbar-logout" onClick={handleLogout} title="Sign out">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

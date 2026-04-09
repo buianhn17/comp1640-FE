@@ -1,207 +1,221 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { getAllIdeas } from "../../services/ideaService";
-import "../../styles/coordinator.css";
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { markOneAsRead, markAllAsRead, clearNotifications } from '../../redux/slices/notificationSlice';
+import '../../styles/coordinator.css';
 
-// ─────────────────────────────────────────────────────────────
-// 🔧 Toggle this to switch between mock data and real API
-const USE_MOCK = false;
-// ─────────────────────────────────────────────────────────────
-
-/* ── Mock data ─────────────────────────────────────────────── */
-const MOCK_IDEAS = [
-  { ideaId: 1,  title: "Automate weekly status reports",        authorId: "u1", authorName: "Alice Nguyen",  isAnonymous: false, submittedAt: "2025-03-20T09:45:00Z" },
-  { ideaId: 2,  title: "Introduce peer-recognition bot",        authorId: "u2", authorName: "Bob Tran",      isAnonymous: false, submittedAt: "2025-03-18T08:30:00Z" },
-  { ideaId: 3,  title: "Four-day workweek pilot",               authorId: "u3", authorName: "Carol Le",      isAnonymous: true,  submittedAt: "2025-03-15T11:00:00Z" },
-  { ideaId: 4,  title: "Standardise API documentation",         authorId: "u1", authorName: "Alice Nguyen",  isAnonymous: false, submittedAt: "2025-03-12T10:15:00Z" },
-  { ideaId: 5,  title: "Green commute subsidy",                 authorId: "u4", authorName: "David Pham",    isAnonymous: false, submittedAt: "2025-03-10T08:00:00Z" },
-  { ideaId: 6,  title: "Cross-department mentorship programme", authorId: "u5", authorName: "Eva Hoang",     isAnonymous: false, submittedAt: "2025-03-08T13:30:00Z" },
-  { ideaId: 7,  title: "Centralise vendor invoicing",           authorId: "u2", authorName: "Bob Tran",      isAnonymous: false, submittedAt: "2025-03-05T09:00:00Z" },
-  { ideaId: 8,  title: "Internal knowledge-sharing sessions",   authorId: "u3", authorName: "Carol Le",      isAnonymous: false, submittedAt: "2025-03-01T10:00:00Z" },
-  { ideaId: 9,  title: "Anonymous feedback channel",            authorId: "u6", authorName: "Frank Vu",      isAnonymous: true,  submittedAt: "2025-02-25T14:00:00Z" },
-  { ideaId: 10, title: "Quarterly hackathon events",            authorId: "u4", authorName: "David Pham",    isAnonymous: false, submittedAt: "2025-02-20T08:00:00Z" },
-];
-
-/* ── Mock service wrapper ──────────────────────────────────── */
-const mockGetAllIdeas = async () => {
-  await new Promise((r) => setTimeout(r, 450));
-  return { content: MOCK_IDEAS, totalElements: MOCK_IDEAS.length, totalPages: 1 };
+/* ─── Format ngày ─────────────────────────────────────────── */
+const formatDate = (d) => {
+  if (!d) return '';
+  const date = new Date(d);
+  return date.toLocaleString('vi-VN', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
 };
 
-/* ── Resolved service call ─────────────────────────────────── */
-const svcGetAllIdeas = USE_MOCK ? mockGetAllIdeas : getAllIdeas;
+const timeAgo = (dateStr) => {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins  < 1)  return 'Vừa xong';
+  if (mins  < 60) return `${mins} phút trước`;
+  if (hours < 24) return `${hours} giờ trước`;
+  return `${days} ngày trước`;
+};
+
+/* ─── Type label ─────────────────────────────────────────── */
+const TYPE_CONFIG = {
+  NEW_IDEA: {
+    label: 'New Idea',
+    bg: '#eff6ff', color: '#2563eb',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="18" height="18">
+        <path d="M12 2a7 7 0 0 1 7 7c0 3-1.5 5-3.5 6.5V17a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-1.5C6.5 14 5 12 5 9a7 7 0 0 1 7-7z"/>
+        <line x1="9" y1="21" x2="15" y2="21"/>
+      </svg>
+    ),
+  },
+  NEW_COMMENT: {
+    label: 'New Comment',
+    bg: '#f0fdf4', color: '#16a34a',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="18" height="18">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    ),
+  },
+};
 
 /* ═══════════════════════════════════════════════════════════ */
-
-const FILTERS = [
-  { key: "all",    label: "Tất cả"      },
-  { key: "unread", label: "Chưa đọc"    },
-  { key: "idea",   label: "Ý tưởng mới" },
-];
-
-const IdeaIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M12 2a7 7 0 0 1 7 7c0 3-1.5 5-3.5 6.5V17a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-1.5C6.5 14 5 12 5 9a7 7 0 0 1 7-7z"/>
-    <line x1="9" y1="21" x2="15" y2="21"/>
-  </svg>
-);
-
-const READ_KEY = "coord_read_notifications";
-const getReadSet  = () => new Set(JSON.parse(localStorage.getItem(READ_KEY) || "[]"));
-const saveReadSet = (set) => localStorage.setItem(READ_KEY, JSON.stringify([...set]));
-
 const CoordinatorNotifications = () => {
-  const navigate = useNavigate();
-  const user     = useSelector((state) => state.auth.user);
-
-  const [ideas,   setIdeas]   = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [readIds, setReadIds] = useState(getReadSet());
-  const [filter,  setFilter]  = useState("all");
-
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        const data = await svcGetAllIdeas({ deptId: user?.deptId, size: 50 });
-        setIdeas(data?.content ?? []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
-  }, [user]);
-
-  const notifications = useMemo(() =>
-    ideas.map((idea) => ({
-      id:     idea.ideaId,
-      type:   "idea",
-      title:  "Ý tưởng mới được nộp",
-      desc:   `${idea.isAnonymous ? "Ẩn danh" : (idea.authorName ?? "Someone")} đã nộp ý tưởng "${idea.title}"`,
-      time:   idea.submittedAt
-        ? new Date(idea.submittedAt).toLocaleDateString("vi-VN")
-        : "—",
-      read:   readIds.has(idea.ideaId),
-      ideaId: idea.ideaId,
-    })), [ideas, readIds]);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const filtered = useMemo(() => {
-    switch (filter) {
-      case "unread": return notifications.filter((n) => !n.read);
-      case "idea":   return notifications.filter((n) => n.type === "idea");
-      default:       return notifications;
-    }
-  }, [filter, notifications]);
-
-  const markRead = (id) => {
-    const updated = new Set([...readIds, id]);
-    setReadIds(updated);
-    saveReadSet(updated);
-  };
-
-  const markAllRead = () => {
-    const updated = new Set(notifications.map((n) => n.id));
-    setReadIds(updated);
-    saveReadSet(updated);
-  };
+  const dispatch  = useDispatch();
+  const navigate  = useNavigate();
+  const { messages, unreadCount } = useSelector((s) => s.notifications);
 
   const handleClick = (notif) => {
-    markRead(notif.id);
+    if (!notif.isRead) dispatch(markOneAsRead(notif.ideaId));
     if (notif.ideaId) navigate(`/ideas/${notif.ideaId}`);
   };
 
   return (
     <div className="co-page">
+      {/* ── Header ── */}
       <div className="co-page-header">
         <div>
-          <h1 className="co-page-title">
-            Thông báo
-            {unreadCount > 0 && (
-              <span style={{
-                marginLeft: 10, fontSize: 13, fontWeight: 700,
-                background: "#2563eb", color: "#fff",
-                padding: "2px 9px", borderRadius: 20, verticalAlign: "middle",
-              }}>
-                {unreadCount}
-              </span>
-            )}
-          </h1>
-          <p className="co-page-sub">Ý tưởng mới nộp trong department của bạn</p>
+          <h1 className="co-page-title">Notifications</h1>
+          <p className="co-page-sub">
+            Thông báo về ý tưởng và bình luận trong department của bạn
+          </p>
+        </div>
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {unreadCount > 0 && (
+            <button
+              onClick={() => dispatch(markAllAsRead())}
+              style={{
+                padding: '8px 14px', borderRadius: 8, fontSize: 13,
+                background: '#eff6ff', color: '#2563eb',
+                border: '1px solid #bfdbfe', cursor: 'pointer', fontWeight: 500,
+              }}
+            >
+              ✓ Đánh dấu tất cả đã đọc
+            </button>
+          )}
+          {messages.length > 0 && (
+            <button
+              onClick={() => dispatch(clearNotifications())}
+              style={{
+                padding: '8px 14px', borderRadius: 8, fontSize: 13,
+                background: '#f8fafc', color: '#64748b',
+                border: '1px solid #e2e8f0', cursor: 'pointer',
+              }}
+            >
+              Xoá tất cả
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="co-card">
-        <div className="co-card-head" style={{ padding: "12px 16px" }}>
-          <div className="co-notif-filters">
-            {FILTERS.map((f) => (
-              <button
-                key={f.key}
-                className={`co-filter-btn${filter === f.key ? " co-filter-btn--active" : ""}`}
-                onClick={() => setFilter(f.key)}
-              >
-                {f.label}
-                {f.key === "unread" && unreadCount > 0 && (
-                  <span style={{
-                    marginLeft: 5,
-                    background: filter === "unread" ? "rgba(255,255,255,0.3)" : "#dbeafe",
-                    color: filter === "unread" ? "#fff" : "#2563eb",
-                    fontSize: 10, fontWeight: 700,
-                    padding: "1px 6px", borderRadius: 20,
-                  }}>
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-            ))}
-            {unreadCount > 0 && (
-              <button className="co-mark-all-btn" onClick={markAllRead}>
-                Đánh dấu tất cả đã đọc
-              </button>
-            )}
-          </div>
+      {/* ── Summary bar ── */}
+      {messages.length > 0 && (
+        <div style={{
+          display: 'flex', gap: 16, marginBottom: 20,
+          padding: '12px 16px', background: '#f8fafc',
+          borderRadius: 10, border: '1px solid #e2e8f0',
+          fontSize: 13, color: '#64748b',
+        }}>
+          <span>Tổng: <strong style={{ color: '#0f172a' }}>{messages.length}</strong></span>
+          <span>Chưa đọc: <strong style={{ color: '#2563eb' }}>{unreadCount}</strong></span>
+          <span>Đã đọc: <strong style={{ color: '#16a34a' }}>{messages.length - unreadCount}</strong></span>
         </div>
+      )}
 
-        <div className="co-notif-list">
-          {loading ? (
-            <div style={{ padding: "40px 0", textAlign: "center", color: "#64748b" }}>
-              Đang tải...
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="co-empty">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
-              <p>Không có thông báo nào</p>
-            </div>
-          ) : (
-            filtered.map((notif) => (
-              <div
-                key={notif.id}
-                className={`co-notif-item${!notif.read ? " co-notif-item--unread" : ""}`}
-                onClick={() => handleClick(notif)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && handleClick(notif)}
-              >
-                <div className="co-notif-icon co-notif-icon--idea">
-                  <IdeaIcon />
-                </div>
-                <div className="co-notif-body">
-                  <div className="co-notif-title">{notif.title}</div>
-                  <div className="co-notif-desc">{notif.desc}</div>
-                  <div className="co-notif-time">{notif.time}</div>
-                </div>
-                {!notif.read && <div className="co-notif-dot" />}
-              </div>
-            ))
-          )}
+      {/* ── Empty ── */}
+      {messages.length === 0 && (
+        <div style={{
+          textAlign: 'center', padding: '80px 20px',
+          color: '#94a3b8',
+        }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"
+            width="48" height="48" style={{ marginBottom: 12, opacity: 0.4 }}>
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <p style={{ fontWeight: 500, fontSize: 15, margin: 0 }}>Chưa có thông báo nào</p>
+          <p style={{ fontSize: 13, margin: '6px 0 0' }}>
+            Thông báo sẽ xuất hiện khi có ý tưởng mới trong department của bạn.
+          </p>
         </div>
+      )}
+
+      {/* ── List ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {messages.map((notif, idx) => {
+          const cfg = TYPE_CONFIG[notif.type] || TYPE_CONFIG.NEW_IDEA;
+          return (
+            <div
+              key={notif.ideaId ? `${notif.ideaId}-${idx}` : idx}
+              onClick={() => handleClick(notif)}
+              style={{
+                display: 'flex', gap: 14, alignItems: 'flex-start',
+                padding: '16px 18px', borderRadius: 12, cursor: 'pointer',
+                border: '1px solid',
+                borderColor: notif.isRead ? '#e2e8f0' : '#bfdbfe',
+                background: notif.isRead ? '#fff' : '#f0f7ff',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+            >
+              {/* Icon */}
+              <div style={{
+                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                background: cfg.bg, color: cfg.color,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {cfg.icon}
+              </div>
+
+              {/* Body */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600,
+                    background: cfg.bg, color: cfg.color,
+                    padding: '1px 8px', borderRadius: 10,
+                  }}>
+                    {cfg.label}
+                  </span>
+                  {!notif.isRead && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 600, color: '#2563eb',
+                      background: '#dbeafe', padding: '1px 6px', borderRadius: 8,
+                    }}>
+                      Mới
+                    </span>
+                  )}
+                </div>
+
+                <p style={{
+                  margin: 0, fontSize: 14, fontWeight: notif.isRead ? 400 : 500,
+                  color: '#0f172a',
+                }}>
+                  {notif.title || 'Thông báo mới'}
+                </p>
+
+                {notif.message && (
+                  <p style={{
+                    margin: '4px 0 0', fontSize: 13, color: '#64748b',
+                    overflow: 'hidden', textOverflow: 'ellipsis',
+                    display: '-webkit-box', WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                  }}>
+                    {notif.message}
+                  </p>
+                )}
+
+                <div style={{ display: 'flex', gap: 12, marginTop: 6, fontSize: 12, color: '#94a3b8' }}>
+                  <span title={formatDate(notif.createdAt)}>
+                    🕐 {timeAgo(notif.createdAt)}
+                  </span>
+                  {notif.ideaId && (
+                    <span style={{ color: '#2563eb' }}>→ Xem ý tưởng</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Unread dot */}
+              {!notif.isRead && (
+                <div style={{
+                  width: 10, height: 10, borderRadius: '50%',
+                  background: '#2563eb', flexShrink: 0, marginTop: 6,
+                }} />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
